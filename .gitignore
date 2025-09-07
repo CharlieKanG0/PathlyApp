@@ -1,0 +1,46 @@
+# Xcode
+# Build products
+build/
+DerivedData/
+
+# User settings
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+
+# Swift Package Manager
+.build/
+Packages/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+
+# macOS
+.DS_Store
+
+# Xcode archives
+*.xcarchive
+
+# SwiftPM
+/.package.resolved
+
+# Misc
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Ignore build artifacts from Xcode Playground
+timeline.xctimeline
+playground.xcworkspace

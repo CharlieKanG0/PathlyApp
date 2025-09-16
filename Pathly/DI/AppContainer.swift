@@ -18,6 +18,10 @@ final class AppContainer: ObservableObject {
         return PlanRepositoryImpl()
     }()
     
+    lazy var userRepository: UserRepository = {
+        return UserRepositoryImpl()
+    }()
+    
     // UseCases
     lazy var generatePlan: GeneratePlanUseCase = {
         return GeneratePlanUseCase(repo: planRepository)

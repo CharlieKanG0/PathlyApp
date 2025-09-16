@@ -56,12 +56,30 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                
+                Section("Debug") {
+                    Button("Reset Onboarding", role: .destructive) {
+                        resetOnboarding()
+                    }
+                }
             }
             
             Spacer()
         }
         .padding()
         .navigationTitle("Settings")
+    }
+    
+    private func resetOnboarding() {
+        // Clear saved user and plan
+        UserDefaults.standard.removeObject(forKey: "currentUser")
+        UserDefaults.standard.removeObject(forKey: "user_plan")
+        
+        // Mark onboarding as incomplete
+        coordinator.container.isFirstLaunch = true
+        
+        // Navigate to the onboarding screen
+        coordinator.popToRoot()
     }
 }
 

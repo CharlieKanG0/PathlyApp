@@ -35,14 +35,18 @@ class OnboardingViewModel: ObservableObject {
             experience: userExperience
         )
         
-        // Save user to persistence (to be implemented)
-        // For now, we'll just print to console
-        print("User created: \(user)")
+        // Save user to persistence
+        do {
+            try await coordinator.container.userRepository.saveUser(user)
+            print("User saved successfully")
+        } catch {
+            print("Error saving user: \(error)")
+        }
         
         // Generate plan using the use case
         do {
             let plan = try await coordinator.container.generatePlan.execute(for: user)
-            print("Plan generated: \(plan)")
+            print("Plan generated and saved: \(plan)")
         } catch {
             print("Error generating plan: \(error)")
         }

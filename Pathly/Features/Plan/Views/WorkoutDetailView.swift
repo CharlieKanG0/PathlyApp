@@ -1,33 +1,40 @@
 import SwiftUI
 
+fileprivate enum WorkoutTab {
+    case warmUp, run, coolDown
+}
+
 struct WorkoutDetailView: View {
     @ObservedObject var coordinator: AppCoordinator
+    @StateObject private var viewModel: WorkoutDetailViewModel
+    @State private var selectedTab: WorkoutTab = .run // Default to the "Run" tab
+
+    init(coordinator: AppCoordinator, workout: Workout) {
+        self.coordinator = coordinator
+        _viewModel = StateObject(wrappedValue: WorkoutDetailViewModel(workout: workout))
+    }
     
     var body: some View {
-        VStack(spacing: 20) {
-            // Tab view for workout sections
-            TabView {
-                WarmUpView()
+        VStack {
+            TabView(selection: $selectedTab) {
+                WarmUpView(exercises: viewModel.warmUpExercises)
                     .tabItem {
-                        Image(systemName: "figure.walk")
-                        Text("Warm-Up")
+                        Label("Warm-Up", systemImage: "figure.walk")
                     }
+                    .tag(WorkoutTab.warmUp)
                 
-                RunView()
+                RunView(intervals: viewModel.runIntervals, summary: viewModel.runIntervalSummary)
                     .tabItem {
-                        Image(systemName: "figure.run")
-                        Text("Run")
+                        Label("Run", systemImage: "figure.run")
                     }
+                    .tag(WorkoutTab.run)
                 
-                CoolDownView()
+                CoolDownView(exercises: viewModel.coolDownExercises)
                     .tabItem {
-                        Image(systemName: "figure.walk.motion")
-                        Text("Cool-Down")
+                        Label("Cool-Down", systemImage: "figure.walk.motion")
                     }
+                    .tag(WorkoutTab.coolDown)
             }
-            .padding(.top)
-            
-            Spacer()
         }
         .navigationTitle("Today's Workout")
         .navigationBarTitleDisplayMode(.inline)
@@ -35,14 +42,16 @@ struct WorkoutDetailView: View {
 }
 
 struct WarmUpView: View {
+    let exercises: [Exercise]
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                ForEach(0..<2, id: \.self) { index in
+                ForEach(exercises, id: \.self) { exercise in
                     ExerciseCard(
-                        title: index == 0 ? "Leg Swings" : "Arm Circles",
-                        description: index == 0 ? "Stand upright and swing one leg forward and backward, then side to side. Repeat with the other leg." : "Extend your arms out to the sides and make small circles, gradually increasing the size.",
-                        duration: "1 min"
+                        title: exercise.name,
+                        description: exercise.description,
+                        duration: "\(Int(exercise.duration / 60)) min"
                     )
                 }
             }
@@ -52,25 +61,33 @@ struct WarmUpView: View {
 }
 
 struct RunView: View {
+    let intervals: [Interval]
+    let summary: String
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text("Walk/Run Intervals")
+                Text(summary)
                     .font(.title2)
                     .bold()
-                
-                Text("Repeat 3 times:")
-                    .font(.headline)
+                    .multilineTextAlignment(.center)
                 
                 VStack(spacing: 10) {
-                    IntervalRow(type: "Walk", duration: "2 min", color: .blue)
-                    IntervalRow(type: "Run", duration: "1 min", color: .red)
+                    ForEach(0..<intervals.count, id: \.self) { index in
+                        let interval = intervals[index]
+                        IntervalRow(
+                            type: interval.type.rawValue.capitalized,
+                            duration: "\(Int(interval.duration / 60)) min",
+                            color: interval.type == .run ? .red : .blue
+                        )
+                    }
                 }
                 .padding()
-                .background(Color.gray.opacity(0.1))
+                .background(Color(UIColor.systemGroupedBackground))
                 .cornerRadius(10)
                 
-                Text("Total time: 9 min")
+                let totalTime = intervals.reduce(0) { $0 + $1.duration }
+                Text("Total time: \(Int(totalTime / 60)) min")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -80,14 +97,16 @@ struct RunView: View {
 }
 
 struct CoolDownView: View {
+    let exercises: [Exercise]
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                ForEach(0..<2, id: \.self) { index in
+                ForEach(exercises, id: \.self) { exercise in
                     ExerciseCard(
-                        title: index == 0 ? "Hamstring Stretch" : "Calf Stretch",
-                        description: index == 0 ? "Sit on the ground with one leg extended and reach toward your toes. Hold for 30 seconds and switch legs." : "Stand facing a wall and place one foot behind you, pressing the heel down. Hold for 30 seconds and switch legs.",
-                        duration: "1 min"
+                        title: exercise.name,
+                        description: exercise.description,
+                        duration: "\(Int(exercise.duration / 60)) min"
                     )
                 }
             }
@@ -113,9 +132,9 @@ struct ExerciseCard: View {
                     .font(.subheadline)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.blue)
+                    .background(Color.blue.opacity(0.8))
                     .foregroundColor(.white)
-                    .cornerRadius(5)
+                    .cornerRadius(8)
             }
             
             Text(description)
@@ -124,21 +143,23 @@ struct ExerciseCard: View {
             
             // Placeholder for GIF
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.gray.opacity(0.2))
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
                 .frame(height: 150)
                 .overlay(
                     VStack {
-                        Image(systemName: "play.circle")
+                        Image(systemName: "photo")
                             .font(.largeTitle)
+                            .foregroundColor(.secondary)
                         Text("Exercise GIF")
                             .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 )
         }
         .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(radius: 2)
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(15)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -158,9 +179,21 @@ struct IntervalRow: View {
             Text(duration)
                 .font(.subheadline)
         }
+        .padding(.vertical, 4)
     }
 }
 
 #Preview {
-    WorkoutDetailView(coordinator: AppCoordinator(container: AppContainer()))
+    let mockWorkout = Workout(
+        date: Date(),
+        warmUp: [Exercise(name: "Test Warm Up", description: "Desc...", duration: 60)],
+        run: RunSegment(intervals: [Interval(duration: 120, type: .walk), Interval(duration: 60, type: .run)]),
+        coolDown: [Exercise(name: "Test Cool Down", description: "Desc...", duration: 60)]
+    )
+    return NavigationView {
+        WorkoutDetailView(
+            coordinator: AppCoordinator(container: AppContainer()),
+            workout: mockWorkout
+        )
+    }
 }

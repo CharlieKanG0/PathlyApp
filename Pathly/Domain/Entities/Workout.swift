@@ -1,6 +1,6 @@
 import Foundation
 
-struct Workout: Codable {
+struct Workout: Codable, Hashable {
     let id: UUID
     let date: Date
     let warmUp: [Exercise]
@@ -16,9 +16,17 @@ struct Workout: Codable {
         self.coolDown = coolDown
         self.isCompleted = false
     }
+
+    public static func == (lhs: Workout, rhs: Workout) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
-struct RunSegment: Codable {
+struct RunSegment: Codable, Hashable {
     let intervals: [Interval]
     
     init(intervals: [Interval]) {
@@ -26,7 +34,7 @@ struct RunSegment: Codable {
     }
 }
 
-struct Interval: Codable {
+struct Interval: Codable, Hashable {
     let duration: TimeInterval
     let type: IntervalType
     
@@ -41,7 +49,7 @@ enum IntervalType: String, Codable {
     case run
 }
 
-struct Exercise: Codable {
+struct Exercise: Codable, Hashable {
     let name: String
     let description: String
     let duration: TimeInterval
@@ -52,5 +60,14 @@ struct Exercise: Codable {
         self.description = description
         self.duration = duration
         self.gifName = gifName
+    }
+
+    public static func == (lhs: Exercise, rhs: Exercise) -> Bool {
+        lhs.name == rhs.name && lhs.duration == rhs.duration
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+        hasher.combine(duration)
     }
 }

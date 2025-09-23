@@ -5,7 +5,7 @@ import SwiftUI
 enum Route: Hashable {
     case onboarding
     case home
-    case workoutDetail
+    case workoutDetail(Workout)
     case settings
 }
 
@@ -19,16 +19,26 @@ final class AppCoordinator: ObservableObject {
     
     @ViewBuilder
     func startView() -> some View {
+        // FIX 1: Use a custom Binding to resolve the @Published property compile error.
         NavigationStack(path: Binding(
             get: { self.path },
             set: { self.path = $0 }
         )) {
-            // Decide initial screen. If onboarding needed, show onboarding.
-            if container.isFirstLaunch {
-                resolveView(for: .onboarding)
-            } else {
-                resolveView(for: .home)
+            // Determine the root view of the stack.
+            let rootView = Group {
+                if container.isFirstLaunch {
+                    resolveView(for: .onboarding)
+                } else {
+                    resolveView(for: .home)
+                }
             }
+            
+            // FIX 2: Apply the navigationDestination modifier to the root view
+            // to handle all subsequent navigation pushes.
+            rootView
+                .navigationDestination(for: Route.self) { route in
+                    self.resolveView(for: route)
+                }
         }
     }
     
@@ -39,8 +49,8 @@ final class AppCoordinator: ObservableObject {
             OnboardingView(coordinator: self)
         case .home:
             HomeView(coordinator: self)
-        case .workoutDetail:
-            WorkoutDetailView(coordinator: self)
+        case .workoutDetail(let workout):
+            WorkoutDetailView(coordinator: self, workout: workout)
         case .settings:
             SettingsView(coordinator: self)
         }
@@ -52,12 +62,14 @@ final class AppCoordinator: ObservableObject {
     }
     
     func navigateToHome() {
+        // To return to the root view (Home), we clear the navigation path.
         path = NavigationPath()
-        path.append(Route.home)
     }
     
     func pop() {
-        path.removeLast()
+        if !path.isEmpty {
+            path.removeLast()
+        }
     }
     
     func popToRoot() {
